@@ -1,3 +1,4 @@
+#if !UNITY_ANDROID
 using Steamworks;
 using UnityEngine;
 
@@ -23,3 +24,4 @@ public class SteamMatchmaker : MonoBehaviour
         
     }
 }
+#endif

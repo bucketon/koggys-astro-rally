@@ -126,28 +126,38 @@ public class PlayerCharacterController : NetworkBehaviour
         {
             //We drivin
 
+            //calculate turn amount based on stats and user input
             var turnAmount = movementVector.x * turn;
             
             if (brake)
             {
+                //increase turn if stopped
                 if (_velocity.magnitude <= 0.1f)
                 {
-                    turnAmount *= 1.4f;
+                    turnAmount *= 1.4f;//TODO: pull this out as a field.
                 }
+                
+                //apply brake based on weight stat.
                 if (_velocity.magnitude > 0)
                 {
                     _velocity = Mathf.Max(0, _velocity.magnitude - weight * speedMultiple) * _velocity.normalized;
                 }
 
+                //charge up the boost
                 _chargeLevel = Mathf.Min(_chargeLevel + charge, maxCharge);
 
+                //programmer animation for "pressing the ship against the ground"
                 _connectedHeight = 0;
 
+                //camera animation to make braking feel more exciting
                 _thirdPersonFollow.CameraDistance = 0.5f;
             }
             else
             {
-                turnAmount *= 0.6f;
+                //decrease turn if not braking
+                turnAmount *= 0.6f;//TODO: pull this out as a field
+                
+                //apply charge meter towards an instant boost
                 if (_chargeLevel > 0)
                 {
                     var boost = Mathf.Max((_chargeLevel - (maxCharge / 2f)) * 2f, 1);
@@ -156,23 +166,30 @@ public class PlayerCharacterController : NetworkBehaviour
                 }
                 else
                 {
+                    //if no charge built up, instead apply normal acceleration
                     _velocity += acceleration * ship.transform.forward;
                 }
 
+                //friction/drag calculation
                 if (_velocity.magnitude > topSpeed)
                 {
                     _velocity = Mathf.Max(topSpeed, _velocity.magnitude - speedDecay * speedMultiple) * _velocity.normalized;
                 }
 
+                //programmer animation to make ship float when not braking
                 _connectedHeight = defaultHeight;
+                
+                //camera animation to make fast feel fast
                 _thirdPersonFollow.CameraDistance = _startCameraDistance;//todo: smooth this out
             }
             
+            //apply turn
             ship.transform.localEulerAngles += new Vector3(0, turnAmount, 0);
 
+            //make ship height and rotation follow terrain
             PlaceOnSurface();
             
-            // calculate ramps
+            // calculate ramps, and go to flight mode if ramp drops off steeply
             _lift += CalculateLift();
             if (_lift >= glideThreshold)
             {
@@ -182,6 +199,7 @@ public class PlayerCharacterController : NetworkBehaviour
             }
             _lift *= glideDecayFactor;
 
+            //make sure the user doesn't randomly drift off the ground
             _velocity.y = 0f;
             
             //update HUD
@@ -191,6 +209,7 @@ public class PlayerCharacterController : NetworkBehaviour
         {
             //we flyin
             
+            //calculate damping to limit player to a vertical arc
             var verticalAngle = Vector3.Dot(ship.transform.forward, Vector3.up);
             var maxVerticalAngle = 0.4f;
             var factor = Mathf.Clamp(maxVerticalAngle - Mathf.Abs(verticalAngle), 0f, maxVerticalAngle);
@@ -198,21 +217,39 @@ public class PlayerCharacterController : NetworkBehaviour
             {
                 factor = 1;
             }
+
+            //also if the player starts outside the allowed arc, slowly bring them back in
+            var rubberband = 0f;
+            if (verticalAngle > maxVerticalAngle)
+            {
+                rubberband = 0.1f;
+            } else if (verticalAngle < maxVerticalAngle * -1f)
+            {
+                rubberband = -0.1f;
+            }
+
+            //apply those calculations, as well as the user inputs. Additionally, correct roll.
+            ship.transform.localEulerAngles += new Vector3(rubberband, 
+                                                           0, 
+                                                           ship.transform.localEulerAngles.z * -1f);
+            ship.transform.eulerAngles += new Vector3(movementVector.y * factor, 
+                                                      movementVector.x * turn, 
+                                                      0);
             
-            ship.transform.localEulerAngles += new Vector3(movementVector.y * factor, 
-                                                           movementVector.x * turn, 
-                                                           0);
-            
+            //move the ship based on stats + current forward vector.
             _velocity += glideAcceleration * ship.transform.forward;
             _chargeLevel = 0;
 
+            //drag calculation
             if (_velocity.magnitude > topSpeed)
             {
                 _velocity = Mathf.Max(topSpeed, _velocity.magnitude - speedDecay * speedMultiple) * _velocity.normalized;
             }
             
+            //camera animation to make fast feel fast
             _thirdPersonFollow.CameraDistance = _startCameraDistance;//todo: smooth this out
             
+            //apply gravity + more gravity if they're out of glide. TODO: instead the ship shouldn't get lift if glide is out.
             _glideEnergy -= 1;
             var force = gravity * (brake ? brakeGravity : 1f);
             if (_glideEnergy < 0f)
@@ -221,6 +258,7 @@ public class PlayerCharacterController : NetworkBehaviour
             }
             _velocity += force * Vector3.down;
 
+            //check if ship is below terrain, if so exit flight and reset ship pitch
             if (CheckLanding())
             {
                 _takeOffTime = -1f;

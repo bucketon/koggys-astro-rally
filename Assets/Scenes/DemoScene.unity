@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 278303056}
   - component: {fileID: 278303059}
   - component: {fileID: 278303058}
+  - component: {fileID: 278303060}
   m_Layer: 0
   m_Name: CinemachineCamera
   m_TagString: Untagged
@@ -221,7 +222,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 625c14eee3ad46c99df7c7c891ef668a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Damping: {x: 0.2, y: 1.5, z: 0.2}
+  Damping: {x: 0.2, y: 0.4, z: 0.2}
   ShoulderOffset: {x: 0, y: 1, z: -2}
   VerticalArmLength: 0.4
   CameraSide: 1
@@ -231,10 +232,40 @@ MonoBehaviour:
     CollisionFilter:
       serializedVersion: 2
       m_Bits: 1
-    IgnoreTag: 
-    CameraRadius: 0.2
+    IgnoreTag: Player
+    CameraRadius: 0.20030001
     DampingIntoCollision: 0
     DampingFromCollision: 0.5
+--- !u!114 &278303060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 278303053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca7de3aefa901374ba29464584a3109a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CameraRadius: 1
+  Decollision:
+    Enabled: 0
+    ObstacleLayers:
+      serializedVersion: 2
+      m_Bits: 64
+    UseFollowTarget:
+      Enabled: 0
+      YOffset: 0
+    Damping: 0.5
+    SmoothingTime: 0
+  TerrainResolution:
+    Enabled: 1
+    TerrainLayers:
+      serializedVersion: 2
+      m_Bits: 64
+    MaximumRaycast: 10
+    Damping: 0.5
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
